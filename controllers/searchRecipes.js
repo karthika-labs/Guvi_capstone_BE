@@ -1,122 +1,56 @@
-// const Recipe = require("../models/recipe");
-
-// const searchRecipes = async (req, res) => {
-//   try {
-//     const { mealType, foodPreference, ingredients, recipeName } = req.query;
-
-//     let filter = {};
-
-
-//     if (mealType) {
-//       const mealArray = mealType.split(",");
-//       filter.mealType = { $in: mealArray };
-//     }
-
-//     if (foodPreference) {
-//       filter.foodPreference = foodPreference;
-//     }
-
-//     if (recipeName) {
-//       filter.recipeName = { $regex: `^${recipeName}`, $options: "i" };
-//     }
-
-// if (ingredients) {
-//   const ingredientArray = ingredients.split(",");
-//   filter["ingredients.name"] = {
-//     $in: ingredientArray.map(i => new RegExp(i.trim(), "i"))
-//   };
-// }
-
-
-//     const recipes = await Recipe.find(filter);
-//     res.json(recipes);
-
-//   } catch (e) {
-//     console.error("Search error:", e);
-//     res.status(500).json({ message: e.message });
-//   }
-// };
-
-// module.exports = { searchRecipes };
-
-
-
-// const Recipe = require("../models/recipe");
-
-// // GET /recipes/search
-// const searchRecipes = async (req, res) => {
-  
-
-//   try {
-//     console.log("QUERY PARAMS:", req.query);
-//     const { q, mealType, foodPreference } = req.query;
-
-//     const query = {};
-
-//     //  MAIN SEARCH (recipeName + ingredients)
-//     if (q) {
-//       const regex = new RegExp(`^${q}`, "i"); // STARTS WITH
-
-//       query.$or = [
-//         { recipeName: regex },
-//         { ingredients: { $elemMatch: { $regex: regex } } }
-//       ];
-//     }
-
-//     // filters
-//     if (mealType) query.mealType = mealType;
-//     if (foodPreference) query.foodPreference = foodPreference;
-
-//     const recipes = await Recipe.find(query);
-//     res.json(recipes);
-//   } catch (err) {
-//     console.error(err);
-//     res.status(500).json({ message: "Search failed" });
-//   }
-// };
-
-
-// module.exports = { searchRecipes };
-
-
 const Recipe = require("../models/recipe");
 
 const searchRecipes = async (req, res) => {
-  console.log("Search Query Params:", req.query);
   try {
-
-    const { search, mealType, foodPreference } = req.query;
-    console.log(search, mealType, foodPreference);
+    const { search, type, mealType, foodPreference } = req.query;
+    console.log("Search params:", { search, type, mealType, foodPreference });
 
     const filter = {};
 
-  if (mealType) {
-      filter.mealType = { $in: mealType.split(",") };
-      console.log("Meal Type Filter:", filter.mealType);
+    // Build base filters
+    if (mealType) {
+      filter.mealType = { $in: mealType.split(",").map(m => m.trim()) };
     }
 
     if (foodPreference) {
       filter.foodPreference = foodPreference;
     }
 
-if (search && search.trim()) {
-      const regex = new RegExp(search.trim(), "i");
+    // Search based on type parameter
+    if (search && search.trim()) {
+      const searchTerm = search.trim();
+      // Use "starts with" pattern (^) for performance - only matches beginning of string
+      const regex = new RegExp(`^${searchTerm}`, "i");
 
-      filter.$or = [
-        { recipeName: regex },           // recipe name
-        { "ingredients.name": regex },   // ingredient name
-      ];
+      if (type === "ing") {
+        // Search only in ingredients
+        filter["ingredients.name"] = regex;
+      } else if (type === "rcp") {
+        // Search only in recipe name
+        filter.recipeName = regex;
+      } else {
+        // Default: search both (for backward compatibility)
+        filter.$or = [
+          { recipeName: regex },
+          { "ingredients.name": regex }
+        ];
+      }
     }
 
-    console.log("FINAL FILTER:", JSON.stringify(filter));
+    console.log("MongoDB filter:", JSON.stringify(filter, null, 2));
 
-    const recipes = await Recipe.find(filter);
+    const recipes = await Recipe.find(filter)
+      .populate('userId', 'username email')
+      .select('-__v')
+      .lean();
+
+    console.log(`Found ${recipes.length} recipes`);
     res.json(recipes);
 
   } catch (e) {
     console.error("Search error:", e);
     res.status(500).json({ message: e.message });
-  }ī
+  }
 };
 
 module.exports = { searchRecipes };
