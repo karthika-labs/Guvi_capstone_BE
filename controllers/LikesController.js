@@ -54,6 +54,7 @@ const postLike = async (req, res) => {
 // };
 
 const deleteLike = async (req, res) => {
+  console.log("Delete like request received");
   try {
     const userId = req.user._id;
     const recipeId = req.params.id;

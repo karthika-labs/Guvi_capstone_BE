@@ -27,6 +27,7 @@ const { postComment,
     deleteComment } = require('../controllers/commentController')
 const { post, getByUser, deleteFavorite } = require('../controllers/favoriteController')
 const { postLike, deleteLike } = require('../controllers/LikesController')
+const { searchRecipes } = require('../controllers/searchRecipes')
 const auth = require('../middleware/authMiddleware')
 
 router.post('/users/register', register)
@@ -41,6 +42,9 @@ router.put("/users/me", auth, updateProfile);
 
 
 router.post('/recipes', auth, addRecipes)
+
+router.get('/recipes/search', auth, searchRecipes)
+
 router.put('/recipes/:id', auth, editRecipes)
 router.delete('/recipes/:id', auth, deleteRecipes)
 router.get('/recipes/:id', auth, getRecipeById)
