@@ -4,36 +4,30 @@ const mongoose = require("mongoose")
 //  --->/recipes/:id/ratings
 const postRating = async (req, res) => {
     try {
-        const { recipeId } = req.params;
-        const { _id: userId } = req.user;
-        const { value } = req.body;
+        const newrating = await ratings.create({
+            ...req.body,
+            userId: req.user._id,
+            recipeId: req.params.recipeId
+        })
+        //rating in recipe model
+        await recipes.updateOne(
+            { _id: req.params.recipeId },
+            { $push: { ratings: newrating._id } }
+        )
 
-        if (!value || value < 1 || value > 5) {
-            return res.status(400).json({ message: "Rating value must be between 1 and 5." });
-        }
+        //avg rating calc
+        const allRatings = await ratings.find({ recipeId: req.params.recipeId })
+        const total = allRatings.reduce((acc, curr) => acc + curr.value, 0)
+        const avgRating = total / allRatings.length
 
-        const updatedRating = await ratings.findOneAndUpdate(
-            { recipeId: recipeId, userId: userId },
-            { value: value, recipeId: recipeId, userId: userId },
-            { new: true, upsert: true, setDefaultsOnInsert: true }
-        );
+        await recipes.findByIdAndUpdate(req.params.recipeId, { averageRating: avgRating })
 
-        await recipes.findByIdAndUpdate(recipeId, {
-            $addToSet: { ratings: updatedRating._id }
-        });
-
-        const allRatings = await ratings.find({ recipeId: recipeId });
-        const total = allRatings.reduce((acc, curr) => acc + curr.value, 0);
-        const avgRating = total / allRatings.length;
-
-        await recipes.findByIdAndUpdate(recipeId, { averageRating: avgRating });
-
-        res.json({ message: "Rating updated successfully (v2)", rating: updatedRating });
-
-    } catch (e) {
-        res.status(500).json({ message: "Something went wrong while posting rating", error: e.message });
+        res.json({ message: "rated successfull", newrating })
     }
-};
+    catch (e) {
+        res.json({ message: "something went wrong while posting rating", error: e.message })
+    }
+}
 
 
 //get /ratings/:id

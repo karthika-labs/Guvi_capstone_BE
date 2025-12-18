@@ -88,22 +88,31 @@ const deleteRecipes = async (req, res) => {
 };
 
 
+// // GET /recipes/:id
+// const getRecipeById = async (req, res) => {
+//   try {
+//     const recipe = await recipes.findById(req.params.id);
+
+//     if (!recipe) {
+//       return res.status(404).json({ message: "Recipe not found" });
+//     }
+
+//     res.json({ recipe });
+//   } catch (err) {
+//     res.status(500).json({ message: err.message });
+//   }
+// }
+
 // GET /recipes/:id
 const getRecipeById = async (req, res) => {
   try {
     const recipe = await recipes.findById(req.params.id)
-    .populate({
-      path: 'ratings',
-      populate: {
-        path: 'userId',
-        select: 'name avatarUrl'
-      }
-    })
+    .populate('ratings')
     .populate({
       path: 'comments',
       populate: {
         path: 'userId',
-        select: 'name avatarUrl'
+        select: 'name' // Only select the 'name' field from the user
       }
     });
 
