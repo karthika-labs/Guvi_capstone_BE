@@ -12,8 +12,8 @@ const userSchema = new mongoose.Schema({
   bio: { type: String, maxLength: 150 },
   avatar: { type: String },         // image URL
   location: { type: String },
-favouriteCuisines:{ type: [String] }, // Array of strings
-dietaryPreference: { type: [String] }, // Array of strings
+
+
   followers: [
     { type: mongoose.Schema.Types.ObjectId, ref: "User" }
   ],
@@ -25,7 +25,7 @@ dietaryPreference: { type: [String] }, // Array of strings
   recipes: [
     { type: mongoose.Schema.Types.ObjectId, ref: "Recipe" }
   ],
-
+   avatar: [{ type: String }],
   recipeCount: { type: Number, default: 0 }
 }, { timestamps: true });
 

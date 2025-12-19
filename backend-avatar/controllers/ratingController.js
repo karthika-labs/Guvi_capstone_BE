@@ -12,36 +12,23 @@ const postRating = async (req, res) => {
             return res.status(400).json({ message: "Rating value must be between 1 and 5." });
         }
 
-        const recipeObjectId = new mongoose.Types.ObjectId(recipeId);
+        const updatedRating = await ratings.findOneAndUpdate(
+            { recipeId: recipeId, userId: userId },
+            { value: value, recipeId: recipeId, userId: userId },
+            { new: true, upsert: true, setDefaultsOnInsert: true }
+        );
 
-        let rating = await ratings.findOne({ recipeId: recipeObjectId, userId: userId });
+        await recipes.findByIdAndUpdate(recipeId, {
+            $addToSet: { ratings: updatedRating._id }
+        });
 
-        if (rating) {
-            // Update existing rating
-            rating.value = value;
-        } else {
-            // Create new rating
-            rating = new ratings({
-                recipeId: recipeObjectId,
-                userId: userId,
-                value: value
-            });
-            // Add the new rating's ID to the recipe only when it's created
-            await recipes.findByIdAndUpdate(recipeObjectId, {
-                $addToSet: { ratings: rating._id }
-            });
-        }
-
-        await rating.save();
-
-        // Recalculate average rating
-        const allRatings = await ratings.find({ recipeId: recipeObjectId });
+        const allRatings = await ratings.find({ recipeId: recipeId });
         const total = allRatings.reduce((acc, curr) => acc + curr.value, 0);
         const avgRating = total / allRatings.length;
 
-        await recipes.findByIdAndUpdate(recipeObjectId, { averageRating: avgRating });
+        await recipes.findByIdAndUpdate(recipeId, { averageRating: avgRating });
 
-        res.json({ message: "Rating submitted successfully", rating: rating });
+        res.json({ message: "Rating updated successfully (v2)", rating: updatedRating });
 
     } catch (e) {
         res.status(500).json({ message: "Something went wrong while posting rating", error: e.message });

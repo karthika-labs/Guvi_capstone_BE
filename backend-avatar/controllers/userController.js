@@ -2,8 +2,6 @@ const Users = require('../models/users.js');
 const sendEmail = require("../utils/sendEmails.js");
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken')
-const cloudinary = require('../config/cloudinary'); // Import Cloudinary
-
 
 
 //Register
@@ -141,49 +139,16 @@ const currentUser = async (req, res) => {
 
 
 
-// Helper to extract Cloudinary public ID from a URL
-const getCloudinaryPublicId = (url) => {
-  if (!url) return null;
-  const parts = url.split("/");
-  const filename = parts[parts.length - 1];
-  return filename.split(".")[0];
-};
-
 const updateProfile = async (req, res) => {
   try {
-    const userId = req.user._id;
-    const user = await Users.findById(userId);
+    const updated = await Users.findByIdAndUpdate(
+      req.user._id,
+      { $set: req.body },
+      { new: true }
+    ).select("-password");
 
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    // Check if a new avatarUrl is provided in the request body
-    if (req.body.avatar) {
-      // If user already has an avatar, delete the old one from Cloudinary
-      if (user.avatar) {
-        const oldAvatarPublicId = getCloudinaryPublicId(user.avatar);
-        if (oldAvatarPublicId) {
-          await cloudinary.uploader.destroy(oldAvatarPublicId);
-          console.log(`Deleted old avatar: ${oldAvatarPublicId}`);
-        }
-      }
-      user.avatar = req.body.avatar; // Update with the new avatar URL
-    }
-
-    // Update other profile fields
-    user.name = req.body.name || user.name;
-    user.bio = req.body.bio || user.bio;
-    user.location = req.body.location || user.location;
-    user.dietaryPreference = req.body.dietaryPreference || user.dietaryPreference;
-    user.favouriteCuisines = req.body.favouriteCuisines ? req.body.favouriteCuisines.split(',').map(c => c.trim()) : user.favouriteCuisines;
-
-    await user.save();
-
-    const updatedUser = await Users.findById(userId).select("-password").populate("recipes"); // Re-fetch to populate
-    res.json(updatedUser);
+    res.json(updated);
   } catch (e) {
-    console.error("Error updating profile:", e);
     res.status(500).json({ message: e.message });
   }
 };
