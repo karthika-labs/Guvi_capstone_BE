@@ -71,12 +71,40 @@ const saveList = async (req, res) => {
         let finalList = autoList;
 
         if (existing) {
+            // Get current recipe IDs to identify which items are from recipes
+            const currentRecipeIds = recipeIds.map(id => id.toString());
+            
+            // Filter manual items: keep only items that are NOT in the current autoList
+            // AND were not from recipes (items that were manually added)
             const manualItems = existing.lists.filter(
-                item => !autoList.some(a => a.itemName === item.itemName)
+                item => {
+                    // Check if this item exists in the new autoList
+                    const inAutoList = autoList.some(a => 
+                        a.itemName === item.itemName && 
+                        (a.unit || "") === (item.unit || "")
+                    );
+                    
+                    // If it's in autoList, it's from a recipe, so don't keep it as manual
+                    if (inAutoList) return false;
+                    
+                    // Check if this item was from a deleted recipe by checking if it's in the old recipes array
+                    // If existing.recipes doesn't exist or item wasn't from recipes, it's a manual item
+                    const wasFromRecipe = existing.recipes && existing.recipes.some(rid => 
+                        currentRecipeIds.includes(rid.toString())
+                    );
+                    
+                    // Keep if it's truly a manual item (not from any recipe)
+                    // OR if it was from a recipe that's no longer in the plan
+                    return !wasFromRecipe || !existing.recipes || existing.recipes.length === 0;
+                }
             );
 
+            // Update auto items: preserve quantity and purchased status from existing list
             const updatedAuto = autoList.map(a => {
-                const prev = existing.lists.find(i => i.itemName === a.itemName);
+                const prev = existing.lists.find(i => 
+                    i.itemName === a.itemName && 
+                    (i.unit || "") === (a.unit || "")
+                );
                 return prev
                     ? { ...a, quantity: prev.quantity, purchased: prev.purchased }
                     : a;

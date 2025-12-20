@@ -2,7 +2,7 @@ const router = require("express").Router()
 const { register,
     login,
     forget_password,
-    reset_password, getUser, currentUser,updateProfile } = require('../controllers/userController')
+    reset_password, getUser, currentUser,updateProfile, getUserById, followUser, unfollowUser, getFollowers, getFollowing } = require('../controllers/userController')
 
 const { addRecipes,
     editRecipes,
@@ -36,8 +36,15 @@ router.post('/users/forgetPasswords', forget_password)
 router.post('/users/resetPasswords/:token', reset_password)
 router.get('/users', auth, getUser)
 router.get('/users/current', auth, currentUser)
+router.get('/users/:userId', auth, getUserById)
 
 router.put("/users/me", auth, updateProfile);
+
+// Follow/Unfollow routes
+router.post('/users/:userId/follow', auth, followUser)
+router.delete('/users/:userId/follow', auth, unfollowUser)
+router.get('/users/:userId/followers', auth, getFollowers)
+router.get('/users/:userId/following', auth, getFollowing)
 
 
 

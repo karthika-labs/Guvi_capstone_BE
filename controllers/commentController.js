@@ -60,13 +60,17 @@ const getAllComment = async (req, res) => {
 //put
 const putComment = async (req, res) => {
     try {
-        const editComments = await comments.findByIdAndUpdate(req.params.id, { text: req.body.text }, { new: true })
-        if (!editComments) {
+        const comment = await comments.findById(req.params.id);
+        if (!comment) {
             return res.status(404).json({ message: "Comment not found" });
         }
 
-     
+        // Check ownership
+        if (comment.userId.toString() !== req.user._id.toString()) {
+            return res.status(403).json({ message: "Not authorized to edit this comment" });
+        }
 
+        const editComments = await comments.findByIdAndUpdate(req.params.id, { text: req.body.text }, { new: true })
         res.json({ editComments })
     }
     catch (e) {
@@ -79,13 +83,18 @@ const putComment = async (req, res) => {
 //delete
 const deleteComment = async (req, res) => {
     try {
-
-
-        const deleteComments = await comments.findByIdAndDelete(req.params.id)
-        if (!deleteComments) {
+        const comment = await comments.findById(req.params.id);
+        if (!comment) {
             return res.status(404).json({ message: "Comment not found" });
         }
 
+        // Check ownership
+        if (comment.userId.toString() !== req.user._id.toString()) {
+            return res.status(403).json({ message: "Not authorized to delete this comment" });
+        }
+
+        const deleteComments = await comments.findByIdAndDelete(req.params.id)
+        
         await recipes.updateOne(
             { _id: deleteComments.recipeId },
             { $pull: { comments: deleteComments._id } }
@@ -94,7 +103,7 @@ const deleteComment = async (req, res) => {
         res.json({ message: "Comment deleted", deleteComments })
     }
     catch (e) {
-        res.json({ message: "something went wrong while updating comments", error: e.message })
+        res.json({ message: "something went wrong while deleting comments", error: e.message })
     }
 
 

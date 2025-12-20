@@ -40,7 +40,7 @@ const searchRecipes = async (req, res) => {
     console.log("MongoDB filter:", JSON.stringify(filter, null, 2));
 
     const recipes = await Recipe.find(filter)
-      .populate('userId', 'username email')
+      .populate('userId', 'username email avatar')
       .select('-__v')
       .lean();
 

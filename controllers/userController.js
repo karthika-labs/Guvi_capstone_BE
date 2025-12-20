@@ -69,7 +69,9 @@ const forget_password = async (req, res) => {
 
         const passwordToken = jwt.sign({ _id: user._id }, process.env.jwt_secretkey, { expiresIn: "15m" })
 
-        const resetLink = `https://recipes.com/reset-password/${passwordToken}`
+        // Use environment variable for frontend URL, fallback to localhost for development
+        const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173"
+        const resetLink = `${frontendUrl}/reset-password/${passwordToken}`
 
         const html = `
       <p>Click the link below to reset your password:</p>
@@ -128,7 +130,17 @@ const getUser = async (req, res) => {
 
 const currentUser = async (req, res) => {
     try {
-        const user = await Users.findById(req.user._id).select('-password').populate("recipes");
+        const user = await Users.findById(req.user._id)
+          .select('-password')
+          .populate("recipes")
+          .populate({
+            path: 'followers',
+            select: 'username avatar name'
+          })
+          .populate({
+            path: 'followings',
+            select: 'username avatar name'
+          });
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
@@ -172,11 +184,16 @@ const updateProfile = async (req, res) => {
     }
 
     // Update other profile fields
-    user.name = req.body.name || user.name;
-    user.bio = req.body.bio || user.bio;
-    user.location = req.body.location || user.location;
-    user.dietaryPreference = req.body.dietaryPreference || user.dietaryPreference;
-    user.favouriteCuisines = req.body.favouriteCuisines ? req.body.favouriteCuisines.split(',').map(c => c.trim()) : user.favouriteCuisines;
+    // Use !== undefined to allow empty strings to be saved
+    if (req.body.name !== undefined) user.name = req.body.name;
+    if (req.body.bio !== undefined) user.bio = req.body.bio;
+    if (req.body.location !== undefined) user.location = req.body.location;
+    if (req.body.dietaryPreference !== undefined) user.dietaryPreference = req.body.dietaryPreference;
+    if (req.body.favouriteCuisines !== undefined) {
+      user.favouriteCuisines = req.body.favouriteCuisines 
+        ? req.body.favouriteCuisines.split(',').map(c => c.trim()).filter(c => c.length > 0)
+        : [];
+    }
 
     await user.save();
 
@@ -188,10 +205,156 @@ const updateProfile = async (req, res) => {
   }
 };
 
+// Get user by ID (for viewing other users' profiles)
+const getUserById = async (req, res) => {
+  try {
+    const user = await Users.findById(req.params.userId)
+      .select('-password')
+      .populate("recipes")
+      .populate({
+        path: 'followers',
+        select: 'username avatar name'
+      })
+      .populate({
+        path: 'followings',
+        select: 'username avatar name'
+      });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json(user);
+  } catch (e) {
+    res.status(500).json({ message: e.message });
+  }
+};
+
+// Follow a user
+const followUser = async (req, res) => {
+  try {
+    const currentUserId = req.user._id;
+    const targetUserId = req.params.userId;
+
+    // Can't follow yourself
+    if (currentUserId.toString() === targetUserId) {
+      return res.status(400).json({ message: "You cannot follow yourself" });
+    }
+
+    const currentUser = await Users.findById(currentUserId);
+    const targetUser = await Users.findById(targetUserId);
+
+    if (!targetUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Check if already following
+    if (currentUser.followings.includes(targetUserId)) {
+      return res.status(400).json({ message: "You are already following this user" });
+    }
+
+    // Add to current user's followings
+    currentUser.followings.push(targetUserId);
+    await currentUser.save();
+
+    // Add to target user's followers
+    targetUser.followers.push(currentUserId);
+    await targetUser.save();
+
+    res.json({ message: "User followed successfully" });
+  } catch (e) {
+    res.status(500).json({ message: e.message });
+  }
+};
+
+// Unfollow a user
+const unfollowUser = async (req, res) => {
+  try {
+    const currentUserId = req.user._id;
+    const targetUserId = req.params.userId;
+
+    const currentUser = await Users.findById(currentUserId);
+    const targetUser = await Users.findById(targetUserId);
+
+    if (!targetUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Check if not following
+    if (!currentUser.followings.includes(targetUserId)) {
+      return res.status(400).json({ message: "You are not following this user" });
+    }
+
+    // Remove from current user's followings
+    currentUser.followings = currentUser.followings.filter(
+      id => id.toString() !== targetUserId
+    );
+    await currentUser.save();
+
+    // Remove from target user's followers
+    targetUser.followers = targetUser.followers.filter(
+      id => id.toString() !== currentUserId
+    );
+    await targetUser.save();
+
+    res.json({ message: "User unfollowed successfully" });
+  } catch (e) {
+    res.status(500).json({ message: e.message });
+  }
+};
+
+// Get followers list
+const getFollowers = async (req, res) => {
+  try {
+    const user = await Users.findById(req.params.userId)
+      .populate({
+        path: 'followers',
+        select: 'username avatar name'
+      })
+      .select('followers');
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json({ followers: user.followers });
+  } catch (e) {
+    res.status(500).json({ message: e.message });
+  }
+};
+
+// Get following list
+const getFollowing = async (req, res) => {
+  try {
+    const user = await Users.findById(req.params.userId)
+      .populate({
+        path: 'followings',
+        select: 'username avatar name'
+      })
+      .select('followings');
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json({ following: user.followings });
+  } catch (e) {
+    res.status(500).json({ message: e.message });
+  }
+};
+
 
 module.exports = {
     register,
     login,
     forget_password,
-    reset_password, getUser,currentUser,updateProfile
+    reset_password, 
+    getUser,
+    currentUser,
+    updateProfile,
+    getUserById,
+    followUser,
+    unfollowUser,
+    getFollowers,
+    getFollowing
 }

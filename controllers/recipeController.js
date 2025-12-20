@@ -93,6 +93,10 @@ const getRecipeById = async (req, res) => {
   try {
     const recipe = await recipes.findById(req.params.id)
     .populate({
+      path: 'userId',
+      select: 'username avatar name'
+    })
+    .populate({
       path: 'ratings',
       populate: {
         path: 'userId',
@@ -122,15 +126,16 @@ const getRecipeById = async (req, res) => {
 //All Recipeby User GET/users/:userId/recipes
 const getRecipesByUser = async (req, res) => {
   try {
-    const recipeList = await recipes.find({ userId: req.params.userId });
+    const recipeList = await recipes.find({ userId: req.params.userId })
+      .populate({
+        path: 'userId',
+        select: 'username avatar' // Populate userId with username and avatar
+      });
 
-    if (recipeList.length === 0) {
-      return res.status(404).json({ message: "No recipes found for this user" });
-    }
-
-    res.json({ recipeList });
+    // Return empty array instead of error if no recipes found
+    res.json({ recipeList: recipeList || [] });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: err.message, recipeList: [] });
   }
 };
 
@@ -139,6 +144,10 @@ const getRecipesByUser = async (req, res) => {
 const Allrecipes = async (req, res) => {
   try {
     const recipe = await recipes.find()
+      .populate({
+        path: 'userId',
+        select: 'username avatar' // Populate userId with username and avatar
+      })
 
     if (!recipe || recipe.length === 0) {
       res.status(400).json({ message: "recipes are found" })
