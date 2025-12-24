@@ -54,7 +54,7 @@ router.get('/recipes/search', auth, searchRecipes)
 
 router.put('/recipes/:id', auth, editRecipes)
 router.delete('/recipes/:id', auth, deleteRecipes)
-router.get('/recipes/:id', auth, getRecipeById)
+router.get('/recipes/:id', getRecipeById) // Public route - allows viewing shared recipes without authentication
 router.get('/recipes', auth, Allrecipes)
 router.get('/users/:userId/recipes', auth, getRecipesByUser)
 
