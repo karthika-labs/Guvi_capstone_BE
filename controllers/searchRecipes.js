@@ -19,8 +19,9 @@ const searchRecipes = async (req, res) => {
     // Search based on type parameter
     if (search && search.trim()) {
       const searchTerm = search.trim();
-      // Use "starts with" pattern (^) for performance - only matches beginning of string
-      const regex = new RegExp(`^${searchTerm}`, "i");
+      // Match search term anywhere in the string (not just at the start)
+      // This allows "Milk" to match "Badam Milk", "Milk Shake", etc.
+      const regex = new RegExp(searchTerm, "i");
 
       if (type === "ing") {
         // Search only in ingredients
