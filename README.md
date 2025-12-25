@@ -2,18 +2,44 @@
 
 Backend API for Recipe Hub application built with Node.js, Express, and MongoDB.
 
-## 🚀 Features
+## Features
 
-- **User Authentication**: JWT-based authentication with secure password hashing
-- **Recipe Management**: CRUD operations for recipes
-- **File Storage**: Cloudinary integration for image and video storage
-- **Comments & Ratings**: User interaction features
-- **Favorites**: Save favorite recipes
-- **Week Planner**: Meal planning functionality
-- **Shopping List**: Generate shopping lists from meal plans
-- **Search**: Advanced recipe search with filters
+### User Authentication
+- User Registration, Login, Logout, and Password Reset
 
-## 📋 Prerequisites
+### Recipe Management
+- Create, View, Edit, and Delete recipes
+- Upload images with recipes
+- Recipes can be rated and commented on by users
+
+### Search & Filter
+- Advanced recipe search
+- Filter by meal type and food preferences
+
+### Social Features
+- Like and favorite recipes
+- Comment on and rate recipes
+- Follow and unfollow other users
+
+### User Profiles
+- View and edit user profiles
+- Display user recipes, favorites, and followers
+
+### Week Planner
+- Plan meals for the week using saved recipes
+
+### Shopping List
+- Automatically generate shopping lists from planned meals
+- Shopping lists can be printed, downloaded, and shared
+
+### Responsive Design
+- Mobile-first and fully responsive UI using Tailwind CSS
+
+### Image Gallery
+- Swiper-based image carousel for recipe images
+
+
+##  Prerequisites
 
 Before you begin, ensure you have the following installed:
 
@@ -22,7 +48,7 @@ Before you begin, ensure you have the following installed:
 - **MongoDB** (local or MongoDB Atlas)
 - **Cloudinary Account** (for file storage)
 
-## 🛠️ Installation
+##  Installation
 
 1. **Clone the repository** (if not already done)
    ```bash
@@ -32,30 +58,8 @@ Before you begin, ensure you have the following installed:
 2. **Install dependencies**
    ```bash
    npm install
-   ```
-
-3. **Create a `.env` file** in the root directory with the following variables:
-   ```env
-   # Server Configuration
-   port=5001
-
-   # MongoDB Configuration
-   mongo_DB_url=your_mongodb_connection_string
-
-   # JWT Secret
-   JWT_SECRET=your_jwt_secret_key
-
-   # Cloudinary Configuration
-   CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
-   CLOUDINARY_API_KEY=your_cloudinary_api_key
-   CLOUDINARY_API_SECRET=your_cloudinary_api_secret
-
-   # Email Configuration (for password reset)
-   EMAIL_USER=your_email@gmail.com
-   EMAIL_PASS=your_email_app_password
-   ```
-
-4. **Set up MongoDB**
+ 
+3. **Set up MongoDB**
    - Option 1: Use MongoDB Atlas (cloud)
      - Create an account at [MongoDB Atlas](https://www.mongodb.com/cloud/atlas)
      - Create a cluster and get your connection string
@@ -63,62 +67,18 @@ Before you begin, ensure you have the following installed:
      - Install MongoDB locally
      - Connection string: `mongodb://localhost:27017/recipehub`
 
-5. **Set up Cloudinary**
+4. **Set up Cloudinary**
    - Create an account at [Cloudinary](https://cloudinary.com/)
    - Get your Cloud Name, API Key, and API Secret from the dashboard
 
-## 🏃 Running the Application
+## Running the Application
 
 ### Development Mode
 ```bash
-npm run dev
-```
-This will start the server with nodemon for auto-reload on file changes.
-
-### Production Mode
-```bash
-npm start
-```
-This will start the server using Node.js.
-
-The server will run on `http://localhost:5001` (or the port specified in your `.env` file).
-
-## 📁 Project Structure
-
-```
-Guvi_capstone_BE/
-├── config/
-│   ├── db.js              # MongoDB connection
-│   └── cloudinary.js      # Cloudinary configuration
-├── controllers/
-│   ├── commentController.js
-│   ├── favoriteController.js
-│   ├── LikesController.js
-│   ├── listController.js
-│   ├── plansController.js
-│   ├── ratingController.js
-│   ├── recipeController.js
-│   ├── searchRecipes.js
-│   └── userController.js
-├── middleware/
-│   └── authMiddleware.js  # JWT authentication middleware
-├── models/
-│   ├── comments.js
-│   ├── favorites.js
-│   ├── planner.js
-│   ├── rating.js
-│   ├── recipe.js
-│   ├── shoppingList.js
-│   └── users.js
-├── routers/
-│   └── routes.js          # API routes
-├── utils/
-│   └── sendEmails.js      # Email utility for password reset
-├── index.js               # Entry point
-└── package.json
+node index.js
 ```
 
-## 🔌 API Endpoints
+##  API Endpoints
 
 ### Authentication
 - `POST /register` - Register a new user
@@ -169,7 +129,7 @@ Guvi_capstone_BE/
 - `POST /users/:id/follow` - Follow user (protected)
 - `DELETE /users/:id/follow` - Unfollow user (protected)
 
-## 🔐 Authentication
+##  Authentication
 
 Most endpoints require authentication. Include the JWT token in the Authorization header:
 
@@ -177,7 +137,7 @@ Most endpoints require authentication. Include the JWT token in the Authorizatio
 Authorization: Bearer <your_jwt_token>
 ```
 
-## 📦 Dependencies
+##  Dependencies
 
 - **express**: Web framework
 - **mongoose**: MongoDB ODM
@@ -192,11 +152,11 @@ Authorization: Bearer <your_jwt_token>
 
 - **nodemon**: Auto-reload server during development
 
-## 🌐 Environment Variables
+## Environment Variables
 
 Make sure to set all required environment variables in your `.env` file. Never commit the `.env` file to version control.
 
-## 📝 Notes
+##  Notes
 
 - The server uses CORS with allowed origins:
   - Production: `https://recipeslab.netlify.app`
@@ -204,29 +164,3 @@ Make sure to set all required environment variables in your `.env` file. Never c
 - JWT tokens are used for authentication. Tokens should be stored securely on the client side.
 - Cloudinary is used for storing recipe images and videos.
 - Password reset functionality requires email configuration.
-
-## 🐛 Troubleshooting
-
-1. **Database connection failed**
-   - Check your MongoDB connection string
-   - Ensure MongoDB is running (if using local instance)
-   - Verify network access (if using MongoDB Atlas)
-
-2. **Cloudinary upload fails**
-   - Verify your Cloudinary credentials in `.env`
-   - Check your Cloudinary account limits
-
-3. **JWT errors**
-   - Ensure `JWT_SECRET` is set in `.env`
-   - Verify token is being sent in the Authorization header
-
-4. **CORS errors**
-   - Verify the frontend URL matches the allowed origins in `index.js`
-   - For production, ensure `https://recipeslab.netlify.app` is in the allowed origins
-   - For local development, ensure `http://localhost:5173` or `http://localhost:3000` is in the allowed origins
-   - Check browser console for specific CORS error messages
-
-## 📄 License
-
-This project is part of the Guvi Capstone project.
-
