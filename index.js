@@ -8,7 +8,12 @@ const app=express();
 app.use(express.json())
 
 app.use(cors({
-    origin:'*'
+    origin: [
+        'https://recipeslab.netlify.app',
+        'http://localhost:5173', // Vite default dev server
+        'http://localhost:3000'   // Alternative dev port
+    ],
+    credentials: true
 }))
 
 connectDB()

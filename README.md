@@ -198,7 +198,9 @@ Make sure to set all required environment variables in your `.env` file. Never c
 
 ## 📝 Notes
 
-- The server uses CORS with `origin: '*'` for development. Consider restricting this in production.
+- The server uses CORS with allowed origins:
+  - Production: `https://recipeslab.netlify.app`
+  - Development: `http://localhost:5173` and `http://localhost:3000`
 - JWT tokens are used for authentication. Tokens should be stored securely on the client side.
 - Cloudinary is used for storing recipe images and videos.
 - Password reset functionality requires email configuration.
@@ -217,6 +219,12 @@ Make sure to set all required environment variables in your `.env` file. Never c
 3. **JWT errors**
    - Ensure `JWT_SECRET` is set in `.env`
    - Verify token is being sent in the Authorization header
+
+4. **CORS errors**
+   - Verify the frontend URL matches the allowed origins in `index.js`
+   - For production, ensure `https://recipeslab.netlify.app` is in the allowed origins
+   - For local development, ensure `http://localhost:5173` or `http://localhost:3000` is in the allowed origins
+   - Check browser console for specific CORS error messages
 
 ## 📄 License
 
